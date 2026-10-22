@@ -1,0 +1,27 @@
+# Build do Wails e saída do Docker
+build/bin/
+/dist/
+*.exe
+
+# Frontend
+node_modules/
+frontend/dist/
+
+# Exportações de senhas do GoLock
+golock-senhas-*
+*.pdf
+*.csv
+
+# Arquivos de ambiente / segredos
+.env
+.env.*
+
+# Editores e sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Arquivos de teste e compactados
+*.zip
+*.log

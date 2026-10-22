@@ -1,0 +1,10 @@
+.git
+.gitignore
+dist
+build/bin
+node_modules
+frontend/node_modules
+frontend/dist
+README*.md
+Dockerfile
+.dockerignore

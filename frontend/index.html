@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0e0a1a" />
+    <title>golock</title>
+  </head>
+  <body>
+    <!-- Fundo animado -->
+    <div class="fundo" aria-hidden="true">
+      <span class="blob b1"></span>
+      <span class="blob b2"></span>
+      <span class="blob b3"></span>
+    </div>
+
+    <!-- ============ LOGIN ============ -->
+    <main id="tela-login" class="tela login">
+      <button
+        class="icon-btn btn-tema canto"
+        aria-label="Alternar tema"
+      ></button>
+
+      <div id="mascote-login" class="mascote-wrap">
+        <div class="aura"></div>
+        <img
+          class="mascote"
+          src="./src/assets/mascote_saudacao.png"
+          alt="Mascote do golock dando oi"
+        />
+      </div>
+
+      <h1 class="marca">go<span>lock</span></h1>
+      <p id="subtitulo" class="sub"></p>
+
+      <div class="campo">
+        <span class="campo-icone" data-i="key"></span>
+        <input
+          id="senha"
+          type="password"
+          placeholder="Senha mestra"
+          autocomplete="off"
+        />
+        <button
+          type="button"
+          class="olho"
+          data-alvo="senha"
+          aria-label="Mostrar senha"
+          data-i="eye"
+        ></button>
+      </div>
+
+      <div id="forca-login" class="forca" data-n="0">
+        <i></i><i></i><i></i><i></i><small></small>
+      </div>
+
+      <div id="campo-senha2" class="campo">
+        <span class="campo-icone" data-i="shield"></span>
+        <input
+          id="senha2"
+          type="password"
+          placeholder="Repita a senha mestra"
+          autocomplete="off"
+        />
+        <button
+          type="button"
+          class="olho"
+          data-alvo="senha2"
+          aria-label="Mostrar senha"
+          data-i="eye"
+        ></button>
+      </div>
+
+      <button id="btn-entrar" class="principal">
+        <span id="btn-entrar-txt"></span>
+        <span class="seta" data-i="arrow"></span>
+      </button>
+
+      <p id="erro" class="erro"></p>
+
+      <button id="btn-esqueci" type="button" class="link-btn escondida">
+        Esqueci minha senha mestra
+      </button>
+
+      <p class="rodape">
+        <span data-i="shield"></span> Suas senhas não saem do seu dispositivo
+      </p>
+    </main>
+
+    <!-- ============ COFRE ============ -->
+    <main id="tela-cofre" class="tela cofre escondida">
+      <header class="topo">
+        <div class="topo-id">
+          <div class="mascote-wrap mini">
+            <img class="mascote" src="./src/assets/mascote_mini.png" alt="" />
+            <div class="aura"></div>
+          </div>
+          <div>
+            <p id="saudacao" class="sub"></p>
+            <h1 class="marca pequena">go<span>lock</span></h1>
+          </div>
+        </div>
+        <div class="acoes">
+          <button class="icon-btn btn-tema" aria-label="Alternar tema"></button>
+          <button
+            id="btn-recup"
+            class="icon-btn"
+            aria-label="Chave de recuperação"
+            title="Chave de recuperação"
+            data-i="key"
+          ></button>
+          <button
+            id="btn-backup"
+            class="icon-btn"
+            aria-label="Exportar e importar"
+            title="Exportar e importar"
+            data-i="archive"
+          ></button>
+          <button
+            id="btn-travar"
+            class="icon-btn"
+            aria-label="Travar cofre"
+            data-i="lock"
+          ></button>
+        </div>
+      </header>
+
+      <section class="resumo">
+        <div class="stat">
+          <span class="stat-ic" data-i="lock"></span>
+          <div><b id="st-total">0</b><small>Senhas</small></div>
+        </div>
+        <div class="stat">
+          <span class="stat-ic" data-i="layers"></span>
+          <div><b id="st-cats">0</b><small>Categorias</small></div>
+        </div>
+        <div class="stat aviso">
+          <span class="stat-ic" data-i="alert"></span>
+          <div><b id="st-fracas">0</b><small>Para melhorar</small></div>
+        </div>
+      </section>
+
+      <label class="busca">
+        <span data-i="search"></span>
+        <input id="busca" placeholder="Buscar senhas" autocomplete="off" />
+      </label>
+
+      <div id="chips" class="chips"></div>
+      <div id="lista"></div>
+
+      <button
+        id="btn-novo"
+        class="fab"
+        aria-label="Adicionar senha"
+        data-i="plus"
+      ></button>
+    </main>
+
+    <!-- ============ ADICIONAR ============ -->
+    <div id="modal" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Nova senha</h2>
+          <button
+            id="btn-fechar"
+            class="icon-btn"
+            aria-label="Fechar"
+            data-i="x"
+          ></button>
+        </div>
+
+        <div class="campo">
+          <span class="campo-icone" data-i="tag"></span>
+          <input
+            id="f-nome"
+            placeholder="Nome (ex: Nubank, Gmail, Netflix)"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="campo">
+          <span class="campo-icone" data-i="user"></span>
+          <input
+            id="f-user"
+            placeholder="Usuário ou e-mail"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="campo-senha">
+          <div class="campo">
+            <span class="campo-icone" data-i="key"></span>
+            <input
+              id="f-pass"
+              type="password"
+              placeholder="Senha"
+              autocomplete="off"
+            />
+            <button
+              id="btn-ver"
+              type="button"
+              class="olho"
+              data-alvo="f-pass"
+              aria-label="Mostrar senha"
+              data-i="eye"
+            ></button>
+          </div>
+          <button
+            id="btn-gerar"
+            class="icon-btn ouro grande"
+            aria-label="Gerar senha forte"
+            data-i="wand"
+          ></button>
+        </div>
+
+        <div id="forca-modal" class="forca" data-n="0">
+          <i></i><i></i><i></i><i></i><small></small>
+        </div>
+
+        <label class="rotulo">Tipo</label>
+        <div id="f-cats" class="tiles"></div>
+        <p id="dica" class="dica"></p>
+
+        <button id="btn-salvar" class="principal">
+          <span>Salvar no cofre</span>
+          <span class="seta" data-i="check"></span>
+        </button>
+        <p id="f-erro" class="erro"></p>
+      </div>
+    </div>
+
+    <!-- ============ CONFIRMAR ============ -->
+    <div id="confirma" class="modal escondida">
+      <div class="folha pequena">
+        <div class="conf-ic" data-i="trash"></div>
+        <h2>Apagar senha?</h2>
+        <p class="sub"><b id="conf-nome"></b> será removida do cofre.</p>
+        <div class="fila">
+          <button id="conf-nao" class="secundario">Cancelar</button>
+          <button id="conf-sim" class="perigo-btn">Apagar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ EXPORTAR / IMPORTAR ============ -->
+    <div id="backup" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Exportar e importar</h2>
+          <button
+            id="b-fechar"
+            class="icon-btn"
+            aria-label="Fechar"
+            data-i="x"
+          ></button>
+        </div>
+
+        <p class="rotulo">Exportar todas as senhas</p>
+        <div id="b-formatos" class="tiles tres">
+          <button type="button" class="tile sel" data-f="pdf">
+            <span data-i="file"></span><span>PDF</span>
+          </button>
+          <button type="button" class="tile" data-f="csv">
+            <span data-i="table"></span><span>CSV</span>
+          </button>
+          <button type="button" class="tile" data-f="txt">
+            <span data-i="lines"></span><span>TXT</span>
+          </button>
+        </div>
+
+        <div class="aviso-box">
+          <span data-i="alert"></span>
+          <p>
+            O arquivo exportado <b>não é criptografado</b>: quem abrir vê todas
+            as suas senhas. Guarde em local seguro e apague quando não precisar
+            mais.
+          </p>
+        </div>
+
+        <div class="campo">
+          <span class="campo-icone" data-i="key"></span>
+          <input
+            id="b-senha"
+            type="password"
+            placeholder="Confirme sua senha mestra"
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            class="olho"
+            data-alvo="b-senha"
+            aria-label="Mostrar senha"
+            data-i="eye"
+          ></button>
+        </div>
+
+        <button id="b-exportar" class="principal">
+          <span>Exportar</span>
+          <span class="seta" data-i="download"></span>
+        </button>
+
+        <hr class="div" />
+
+        <p class="rotulo">Importar senhas</p>
+        <p class="sub peq">
+          Aceita <b>.csv</b>, <b>.txt</b> e <b>.pdf</b> exportados pelo golock,
+          além de CSV de outros gerenciadores (Chrome, Bitwarden, 1Password).
+          Senhas repetidas são ignoradas e nada do que você já tem é apagado.
+        </p>
+        <button id="b-importar" class="secundario cheio">
+          <span data-i="upload"></span>
+          <span>Escolher arquivo</span>
+        </button>
+
+        <p id="b-res" class="ok-txt"></p>
+        <p id="b-erro" class="erro"></p>
+      </div>
+    </div>
+
+    <!-- ============ CHAVE DE RECUPERAÇÃO (exibição) ============ -->
+    <div id="recup" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Sua chave de recuperação</h2>
+        </div>
+        <p class="sub peq">
+          Se você esquecer a senha mestra, <b>só esta chave</b> abre o cofre de
+          novo, sem perder nenhuma senha. Ela aparece <b>uma única vez</b>:
+          anote em papel e guarde fora do computador.
+        </p>
+
+        <div id="recup-chave" class="chave-box"></div>
+
+        <button id="recup-copiar" type="button" class="secundario cheio">
+          <span data-i="copy"></span>
+          <span>Copiar chave</span>
+        </button>
+
+        <div class="aviso-box">
+          <span data-i="alert"></span>
+          <p>
+            Quem tiver esta chave abre o cofre <b>sem a senha mestra</b>. Não
+            guarde junto do arquivo do cofre e não tire print.
+          </p>
+        </div>
+
+        <label class="check">
+          <input id="recup-ok" type="checkbox" />
+          <span>Guardei a chave em um lugar seguro</span>
+        </label>
+
+        <button id="recup-continuar" class="principal" disabled>
+          <span>Continuar</span>
+          <span class="seta" data-i="arrow"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ ESQUECI A SENHA MESTRA ============ -->
+    <div id="esqueci" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Esqueci a senha mestra</h2>
+          <button
+            id="e-fechar"
+            class="icon-btn"
+            aria-label="Fechar"
+            data-i="x"
+          ></button>
+        </div>
+
+        <div id="e-sem" class="aviso-box escondida">
+          <span data-i="alert"></span>
+          <p>
+            Este cofre não tem chave de recuperação (foi criado em uma versão
+            anterior). Sem a senha mestra não há como abrir os dados. Se você
+            tem um backup exportado (PDF ou CSV), mova o arquivo
+            <b>vault.golock</b> para outra pasta, abra o golock para criar um
+            cofre novo e importe o backup.
+          </p>
+        </div>
+
+        <div id="e-form" class="bloco">
+          <p class="sub peq">
+            Digite a chave de recuperação que você guardou ao criar o cofre e
+            escolha uma senha mestra nova. Seus dados continuam intactos.
+          </p>
+
+          <div class="campo">
+            <span class="campo-icone" data-i="shield"></span>
+            <input
+              id="e-chave"
+              placeholder="Chave de recuperação (ABCD-EFGH-...)"
+              autocomplete="off"
+              spellcheck="false"
+              autocapitalize="characters"
+            />
+          </div>
+
+          <div class="campo">
+            <span class="campo-icone" data-i="key"></span>
+            <input
+              id="e-senha"
+              type="password"
+              placeholder="Nova senha mestra"
+              autocomplete="off"
+            />
+            <button
+              type="button"
+              class="olho"
+              data-alvo="e-senha"
+              aria-label="Mostrar senha"
+              data-i="eye"
+            ></button>
+          </div>
+
+          <div id="forca-e" class="forca" data-n="0">
+            <i></i><i></i><i></i><i></i><small></small>
+          </div>
+
+          <div class="campo">
+            <span class="campo-icone" data-i="key"></span>
+            <input
+              id="e-senha2"
+              type="password"
+              placeholder="Repita a nova senha mestra"
+              autocomplete="off"
+            />
+            <button
+              type="button"
+              class="olho"
+              data-alvo="e-senha2"
+              aria-label="Mostrar senha"
+              data-i="eye"
+            ></button>
+          </div>
+
+          <button id="e-ok" class="principal">
+            <span id="e-ok-txt">Redefinir senha</span>
+            <span class="seta" data-i="check"></span>
+          </button>
+          <p id="e-erro" class="erro"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ GERAR CHAVE DE RECUPERAÇÃO ============ -->
+    <div id="gerar" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Chave de recuperação</h2>
+          <button
+            id="g-fechar"
+            class="icon-btn"
+            aria-label="Fechar"
+            data-i="x"
+          ></button>
+        </div>
+
+        <p id="g-status" class="sub peq"></p>
+
+        <div class="aviso-box">
+          <span data-i="alert"></span>
+          <p>
+            Gerar uma chave nova <b>invalida a anterior</b>. Guarde a nova em
+            papel, fora do computador.
+          </p>
+        </div>
+
+        <div class="campo">
+          <span class="campo-icone" data-i="key"></span>
+          <input
+            id="g-senha"
+            type="password"
+            placeholder="Confirme sua senha mestra"
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            class="olho"
+            data-alvo="g-senha"
+            aria-label="Mostrar senha"
+            data-i="eye"
+          ></button>
+        </div>
+
+        <button id="g-ok" class="principal">
+          <span id="g-ok-txt">Gerar chave</span>
+          <span class="seta" data-i="key"></span>
+        </button>
+        <p id="g-erro" class="erro"></p>
+      </div>
+    </div>
+
+    <!-- ============ CHAVE DE RECUPERAÇÃO (exibição) ============ -->
+    <div id="recup" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Sua chave de recuperação</h2>
+        </div>
+        <p class="sub peq">
+          Se você esquecer a senha mestra, <b>só esta chave</b> abre o cofre de
+          novo, sem perder nenhuma senha. Ela aparece <b>uma única vez</b>:
+          anote em papel e guarde fora do computador.
+        </p>
+
+        <div id="recup-chave" class="chave-box"></div>
+
+        <button id="recup-copiar" type="button" class="secundario cheio">
+          <span data-i="copy"></span>
+          <span>Copiar chave</span>
+        </button>
+
+        <div class="aviso-box">
+          <span data-i="alert"></span>
+          <p>
+            Quem tiver esta chave abre o cofre <b>sem a senha mestra</b>. Não
+            guarde junto do arquivo do cofre e não tire print.
+          </p>
+        </div>
+
+        <label class="check">
+          <input id="recup-ok" type="checkbox" />
+          <span>Guardei a chave em um lugar seguro</span>
+        </label>
+
+        <button id="recup-continuar" class="principal" disabled>
+          <span>Continuar</span>
+          <span class="seta" data-i="arrow"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ ESQUECI A SENHA MESTRA ============ -->
+    <div id="esqueci" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Esqueci a senha mestra</h2>
+          <button
+            id="e-fechar"
+            class="icon-btn"
+            aria-label="Fechar"
+            data-i="x"
+          ></button>
+        </div>
+
+        <div id="e-sem" class="aviso-box escondida">
+          <span data-i="alert"></span>
+          <p>
+            Este cofre não tem chave de recuperação (foi criado em uma versão
+            anterior). Sem a senha mestra não há como abrir os dados. Se você
+            tem um backup exportado (PDF ou CSV), mova o arquivo
+            <b>vault.golock</b> para outra pasta, abra o golock para criar um
+            cofre novo e importe o backup.
+          </p>
+        </div>
+
+        <div id="e-form" class="bloco">
+          <p class="sub peq">
+            Digite a chave de recuperação que você guardou ao criar o cofre e
+            escolha uma senha mestra nova. Seus dados continuam intactos.
+          </p>
+
+          <div class="campo">
+            <span class="campo-icone" data-i="shield"></span>
+            <input
+              id="e-chave"
+              placeholder="Chave de recuperação (ABCD-EFGH-...)"
+              autocomplete="off"
+              spellcheck="false"
+              autocapitalize="characters"
+            />
+          </div>
+
+          <div class="campo">
+            <span class="campo-icone" data-i="key"></span>
+            <input
+              id="e-senha"
+              type="password"
+              placeholder="Nova senha mestra"
+              autocomplete="off"
+            />
+            <button
+              type="button"
+              class="olho"
+              data-alvo="e-senha"
+              aria-label="Mostrar senha"
+              data-i="eye"
+            ></button>
+          </div>
+
+          <div id="forca-e" class="forca" data-n="0">
+            <i></i><i></i><i></i><i></i><small></small>
+          </div>
+
+          <div class="campo">
+            <span class="campo-icone" data-i="key"></span>
+            <input
+              id="e-senha2"
+              type="password"
+              placeholder="Repita a nova senha mestra"
+              autocomplete="off"
+            />
+            <button
+              type="button"
+              class="olho"
+              data-alvo="e-senha2"
+              aria-label="Mostrar senha"
+              data-i="eye"
+            ></button>
+          </div>
+
+          <button id="e-ok" class="principal">
+            <span id="e-ok-txt">Redefinir senha</span>
+            <span class="seta" data-i="check"></span>
+          </button>
+          <p id="e-erro" class="erro"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ GERAR CHAVE DE RECUPERAÇÃO ============ -->
+    <div id="gerar" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Chave de recuperação</h2>
+          <button
+            id="g-fechar"
+            class="icon-btn"
+            aria-label="Fechar"
+            data-i="x"
+          ></button>
+        </div>
+
+        <p id="g-status" class="sub peq"></p>
+
+        <div class="aviso-box">
+          <span data-i="alert"></span>
+          <p>
+            Gerar uma chave nova <b>invalida a anterior</b>. Guarde a nova em
+            papel, fora do computador.
+          </p>
+        </div>
+
+        <div class="campo">
+          <span class="campo-icone" data-i="key"></span>
+          <input
+            id="g-senha"
+            type="password"
+            placeholder="Confirme sua senha mestra"
+            autocomplete="off"
+          />
+          <button
+            type="button"
+            class="olho"
+            data-alvo="g-senha"
+            aria-label="Mostrar senha"
+            data-i="eye"
+          ></button>
+        </div>
+
+        <button id="g-ok" class="principal">
+          <span id="g-ok-txt">Gerar chave</span>
+          <span class="seta" data-i="key"></span>
+        </button>
+        <p id="g-erro" class="erro"></p>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">
+      <span id="toast-ic"></span>
+      <span id="toast-txt"></span>
+    </div>
+
+    <script src="./src/main.js" type="module"></script>
+  </body>
+</html>
