@@ -323,6 +323,12 @@ input.tremer {
   border-color: var(--erro);
 }
 
+/* Remove o olho nativo do navegador/WebView2 */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 .olho {
   position: absolute;
   right: 6px;
