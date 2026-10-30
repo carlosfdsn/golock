@@ -8,6 +8,7 @@ import {
   DetectCategory,
   AddEntry,
   ListEntries,
+  UpdateEntry,
   DeleteEntry,
   GeneratePassword,
   CopyToClipboard,
@@ -32,6 +33,9 @@ const P = {
   eyeOff:
     '<path d="M3 3l18 18M10.6 6.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4-.9"/>',
   copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+  dots: '<circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
   trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
   wand: '<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/>',
@@ -253,7 +257,6 @@ function abrirBackup() {
 }
 const fecharBackup = () => $("backup").classList.add("escondida");
 
-$("btn-backup").onclick = abrirBackup;
 $("b-fechar").onclick = fecharBackup;
 $("backup").addEventListener(
   "click",
@@ -374,13 +377,96 @@ $("senha").addEventListener("input", () =>
   mostrarForca($("forca-login"), $("senha").value),
 );
 
-$("btn-travar").onclick = async () => {
-  fecharBackup();
-  fecharGerar();
-  await Lock();
-  entries = [];
-  revelados.clear();
-  iniciar();
+let travando = false;
+async function travar(auto = false) {
+  if (travando) return;
+  travando = true;
+  try {
+    fecharMenu();
+    fecharAuto();
+    fecharBackup();
+    fecharGerar();
+    fecharModal();
+    fecharEsqueci();
+    $("confirma").classList.add("escondida");
+    await Lock();
+    entries = [];
+    revelados.clear();
+    $("busca").value = "";
+    await iniciar();
+    if (auto) toast("Bloqueado por inatividade", "lock");
+  } finally {
+    travando = false;
+  }
+}
+$("btn-travar").onclick = () => travar();
+
+// ---------- Bloqueio por inatividade ----------
+const TEMPOS = [1, 5, 15, 30]; // minutos
+let minutosAuto = 5;
+try {
+  const v = Number(localStorage.getItem("autolock"));
+  if (TEMPOS.includes(v)) minutosAuto = v;
+} catch {}
+let ultimaAtividade = Date.now();
+const marcarAtividade = () => (ultimaAtividade = Date.now());
+["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach((ev) =>
+  addEventListener(ev, marcarAtividade, { passive: true, capture: true }),
+);
+
+function verificarInatividade() {
+  if ($("tela-cofre").classList.contains("escondida")) return;
+  // com a chave de recuperação na tela a pessoa precisa de tempo para anotá-la
+  if (!$("recup").classList.contains("escondida")) return marcarAtividade();
+  if (Date.now() - ultimaAtividade >= minutosAuto * 60000) travar(true);
+}
+setInterval(verificarInatividade, 1000);
+document.addEventListener("visibilitychange", verificarInatividade);
+
+function marcarTempoAtual() {
+  document
+    .querySelectorAll("#a-tempos .tile")
+    .forEach((t) =>
+      t.classList.toggle("sel", Number(t.dataset.m) === minutosAuto),
+    );
+}
+function abrirAuto() {
+  marcarTempoAtual();
+  $("auto").classList.remove("escondida");
+}
+const fecharAuto = () => $("auto").classList.add("escondida");
+document.querySelectorAll("#a-tempos .tile").forEach(
+  (t) =>
+    (t.onclick = () => {
+      minutosAuto = Number(t.dataset.m);
+      try {
+        localStorage.setItem("autolock", String(minutosAuto));
+      } catch {}
+      marcarAtividade();
+      fecharAuto();
+      toast(`Trava após ${minutosAuto} min sem uso`, "lock");
+    }),
+);
+$("a-fechar").onclick = fecharAuto;
+$("auto").addEventListener(
+  "click",
+  (e) => e.target === $("auto") && fecharAuto(),
+);
+
+// ---------- Menu do cabeçalho (⋯) ----------
+$("btn-mais").onclick = (ev) => {
+  const escuro = document.documentElement.dataset.tema === "dark";
+  abrirMenu(ev.currentTarget, [
+    {
+      icone: escuro ? "sun" : "moon",
+      texto: escuro ? "Tema claro" : "Tema escuro",
+      fn: () => setTema(escuro ? "light" : "dark"),
+    },
+    { icone: "key", texto: "Chave de recuperação", fn: abrirGerar },
+    { icone: "archive", texto: "Exportar e importar", fn: abrirBackup },
+    "-",
+    { icone: "clock", texto: "Bloqueio automático", fn: abrirAuto },
+  ]);
 };
 
 // ---------- Chave de recuperação ----------
@@ -505,7 +591,6 @@ const fecharGerar = () => {
   $("gerar").classList.add("escondida");
 };
 
-$("btn-recup").onclick = abrirGerar;
 $("g-fechar").onclick = fecharGerar;
 $("gerar").addEventListener(
   "click",
@@ -542,6 +627,7 @@ let filtro = "todas";
 const revelados = new Set();
 
 async function abrirCofre() {
+  marcarAtividade();
   cats = await Categories();
   filtro = "todas";
   $("busca").value = "";
@@ -566,11 +652,13 @@ function atualizarResumo() {
 }
 
 function render(animar = false) {
+  fecharMenu();
   const termo = $("busca").value.trim().toLowerCase();
   atualizarResumo();
 
   // chips
   const chips = $("chips");
+  const rolagem = chips.scrollLeft; // mantém a posição ao trocar de filtro
   chips.innerHTML = "";
   const addChip = (key, label, icone, n) => {
     const b = document.createElement("button");
@@ -588,6 +676,7 @@ function render(animar = false) {
     const n = entries.filter((e) => e.category === c.key).length;
     if (n) addChip(c.key, c.label, c.key, n);
   });
+  chips.scrollLeft = rolagem;
   if (filtro !== "todas" && !entries.some((e) => e.category === filtro))
     filtro = "todas";
 
@@ -632,6 +721,62 @@ function render(animar = false) {
   }
 }
 
+// ---------- Menu de ações do card (⋯) ----------
+const menu = document.createElement("div");
+menu.id = "menu-card";
+menu.className = "menu-card escondida";
+menu.setAttribute("role", "menu");
+document.body.appendChild(menu);
+let menuBtn = null; // botão ⋯ que abriu o menu
+
+function fecharMenu() {
+  menu.classList.add("escondida");
+  menu.innerHTML = "";
+  if (menuBtn) menuBtn.setAttribute("aria-expanded", "false");
+  menuBtn = null;
+}
+
+// itens: [{ icone, texto, perigo, fn }] — "-" desenha um separador
+function abrirMenu(btn, itens) {
+  if (menuBtn === btn) return fecharMenu(); // clicar de novo fecha
+  fecharMenu();
+  itens.forEach((it) => {
+    if (it === "-") {
+      menu.appendChild(document.createElement("hr"));
+      return;
+    }
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("role", "menuitem");
+    if (it.perigo) b.className = "perigo";
+    b.innerHTML = svg(it.icone) + "<span></span>";
+    b.querySelector("span").textContent = it.texto;
+    b.onclick = () => {
+      fecharMenu();
+      it.fn();
+    };
+    menu.appendChild(b);
+  });
+  menuBtn = btn;
+  btn.setAttribute("aria-expanded", "true");
+
+  // posiciona perto do botão; vira para cima se não couber embaixo
+  menu.classList.remove("escondida");
+  const r = btn.getBoundingClientRect();
+  const h = menu.offsetHeight;
+  const abaixo = r.bottom + 6 + h <= innerHeight - 8;
+  menu.style.top = (abaixo ? r.bottom + 6 : Math.max(8, r.top - h - 6)) + "px";
+  menu.style.right = Math.max(8, innerWidth - r.right) + "px";
+  menu.style.transformOrigin = abaixo ? "top right" : "bottom right";
+}
+
+document.addEventListener("pointerdown", (ev) => {
+  if (menuBtn && !menu.contains(ev.target) && !ev.target.closest(".mais"))
+    fecharMenu();
+});
+addEventListener("resize", fecharMenu);
+document.addEventListener("scroll", fecharMenu, true);
+
 function criarCard(e, i, animar) {
   const card = document.createElement("div");
   card.className = "card" + (animar ? " entra" : "");
@@ -645,6 +790,7 @@ function criarCard(e, i, animar) {
   const visivel = revelados.has(e.id);
   const fraca = forca(e.password) <= 2;
 
+  // Só o essencial fica à vista: copiar e o menu ⋯ (ver, editar, apagar)
   card.innerHTML = `
     <div class="avatar">${svg(e.category)}</div>
     <div class="info">
@@ -654,9 +800,8 @@ function criarCard(e, i, animar) {
     </div>
     <div class="mini">
       ${fraca ? `<span class="alerta" title="Senha fraca">${svg("alert")}</span>` : ""}
-      <button class="icon-btn ver" aria-label="Mostrar">${svg(visivel ? "eyeOff" : "eye")}</button>
-      <button class="icon-btn copiar" aria-label="Copiar">${svg("copy")}</button>
-      <button class="icon-btn perigo apagar" aria-label="Apagar">${svg("trash")}</button>
+      <button class="icon-btn copiar" aria-label="Copiar senha" title="Copiar senha">${svg("copy")}</button>
+      <button class="icon-btn mais" aria-label="Mais opções" title="Mais opções" aria-haspopup="menu" aria-expanded="false">${svg("dots")}</button>
     </div>`;
 
   // textContent: seguro contra HTML digitado pelo usuário
@@ -666,10 +811,17 @@ function criarCard(e, i, animar) {
     ? e.password
     : "••••••••••";
 
-  card.querySelector(".ver").onclick = () => {
-    visivel ? revelados.delete(e.id) : revelados.add(e.id);
-    render(false);
+  const apagar = async () => {
+    if (!(await confirmar(e.name))) return;
+    card.classList.remove("entra");
+    card.classList.add("saindo");
+    await new Promise((r) => setTimeout(r, 350));
+    await DeleteEntry(e.id);
+    revelados.delete(e.id);
+    await carregar();
+    toast("Senha apagada", "trash");
   };
+
   card.querySelector(".copiar").onclick = async (ev) => {
     const btn = ev.currentTarget;
     await CopyToClipboard(e.password);
@@ -683,20 +835,39 @@ function criarCard(e, i, animar) {
     }, 1500);
     toast("Copiada · some em 15s");
   };
-  card.querySelector(".apagar").onclick = async () => {
-    if (!(await confirmar(e.name))) return;
-    card.classList.remove("entra");
-    card.classList.add("saindo");
-    await new Promise((r) => setTimeout(r, 350));
-    await DeleteEntry(e.id);
-    revelados.delete(e.id);
-    await carregar();
-    toast("Senha apagada", "trash");
-  };
+
+  card.querySelector(".mais").onclick = (ev) =>
+    abrirMenu(ev.currentTarget, [
+      {
+        icone: visivel ? "eyeOff" : "eye",
+        texto: visivel ? "Ocultar senha" : "Mostrar senha",
+        fn: () => {
+          visivel ? revelados.delete(e.id) : revelados.add(e.id);
+          render(false);
+        },
+      },
+      { icone: "edit", texto: "Editar", fn: () => abrirModal(e) },
+      "-",
+      { icone: "trash", texto: "Apagar", perigo: true, fn: apagar },
+    ]);
+
   return card;
 }
 
 $("busca").addEventListener("input", () => render(false));
+
+// Roda do mouse sobre as categorias rola para os lados
+$("chips").addEventListener(
+  "wheel",
+  (ev) => {
+    const el = ev.currentTarget;
+    if (el.scrollWidth <= el.clientWidth) return; // tudo cabe: nada a rolar
+    const d = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY;
+    ev.preventDefault();
+    el.scrollLeft += d;
+  },
+  { passive: false },
+);
 
 // ---------- Confirmar ----------
 function confirmar(nome) {
@@ -715,6 +886,7 @@ function confirmar(nome) {
 // ---------- Modal de adicionar ----------
 let catManual = ""; // '' = automático
 let detectada = "";
+let editandoId = null; // null = nova senha; número = editando essa senha
 
 function renderTiles() {
   const box = $("f-cats");
@@ -750,22 +922,42 @@ function atualizarDica() {
     : `Detectado automaticamente: ${c.label}`;
 }
 
-function abrirModal() {
-  ["f-nome", "f-user", "f-pass"].forEach((id) => ($(id).value = ""));
+// abrirModal() = nova senha · abrirModal(entrada) = editar essa senha
+async function abrirModal(entrada) {
+  editandoId = entrada ? entrada.id : null;
+  $("f-nome").value = entrada ? entrada.name : "";
+  $("f-user").value = entrada ? entrada.username : "";
+  $("f-pass").value = entrada ? entrada.password : "";
   $("f-pass").type = "password";
   $("btn-ver").innerHTML = svg("eye");
-  mostrarForca($("forca-modal"), "");
-  catManual = "";
+  mostrarForca($("forca-modal"), $("f-pass").value);
+  catManual = entrada ? entrada.category : "";
   detectada = "";
   $("f-erro").textContent = "";
+  $("modal-titulo").textContent = entrada ? "Editar senha" : "Nova senha";
+  $("btn-salvar-txt").textContent = entrada
+    ? "Salvar alterações"
+    : "Salvar no cofre";
   renderTiles();
   atualizarDica();
   $("modal").classList.remove("escondida");
   setTimeout(() => $("f-nome").focus(), 60);
+  if (entrada) {
+    // sugestão automática pelo nome atual (aparece se a pessoa desmarcar a categoria)
+    const key = await DetectCategory(entrada.name);
+    if (editandoId === entrada.id) {
+      detectada = key;
+      renderTiles();
+    }
+  }
 }
-const fecharModal = () => $("modal").classList.add("escondida");
+function fecharModal() {
+  $("modal").classList.add("escondida");
+  editandoId = null;
+  $("f-pass").value = ""; // não deixa a senha na tela/DOM depois de fechar
+}
 
-$("btn-novo").onclick = abrirModal;
+$("btn-novo").onclick = () => abrirModal();
 $("btn-fechar").onclick = fecharModal;
 $("modal").addEventListener(
   "click",
@@ -799,17 +991,28 @@ $("btn-gerar").onclick = async () => {
 
 async function salvar() {
   $("f-erro").textContent = "";
+  const editando = editandoId !== null;
   try {
-    await AddEntry(
-      $("f-nome").value,
-      $("f-user").value,
-      $("f-pass").value,
-      catManual,
-    );
+    if (editando) {
+      await UpdateEntry(
+        editandoId,
+        $("f-nome").value,
+        $("f-user").value,
+        $("f-pass").value,
+        catManual,
+      );
+    } else {
+      await AddEntry(
+        $("f-nome").value,
+        $("f-user").value,
+        $("f-pass").value,
+        catManual,
+      );
+    }
     faiscarDe($("btn-salvar"), 18);
     fecharModal();
     await carregar();
-    toast("Salva no cofre");
+    toast(editando ? "Alterações salvas" : "Salva no cofre");
   } catch (err) {
     $("f-erro").textContent = String(err);
   }
@@ -818,11 +1021,16 @@ $("btn-salvar").onclick = salvar;
 
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
+  if (menuBtn) {
+    fecharMenu();
+    return;
+  }
   if (!$("recup").classList.contains("escondida")) return; // só fecha ao confirmar que guardou a chave
   if (!$("esqueci").classList.contains("escondida")) fecharEsqueci();
   else if (!$("gerar").classList.contains("escondida")) fecharGerar();
   else if (!$("confirma").classList.contains("escondida"))
     $("conf-nao").click();
+  else if (!$("auto").classList.contains("escondida")) fecharAuto();
   else if (!$("backup").classList.contains("escondida")) fecharBackup();
   else fecharModal();
 });

@@ -328,6 +328,34 @@ func (a *App) ListEntries() []Entry {
 	return out
 }
 
+// Edita uma senha que já existe. category vazio = detectar automaticamente.
+// Se não conseguir gravar no disco, desfaz a alteração.
+func (a *App) UpdateEntry(id int, name, user, pass, category string) error {
+	if !a.unlocked {
+		return errors.New("cofre travado")
+	}
+	name = strings.TrimSpace(name)
+	if name == "" || pass == "" {
+		return errors.New("nome e senha são obrigatórios")
+	}
+	if !validCategory(category) {
+		category = a.DetectCategory(name)
+	}
+	for i, e := range a.entries {
+		if e.ID != id {
+			continue
+		}
+		old := e
+		a.entries[i] = Entry{id, name, strings.TrimSpace(user), pass, category}
+		if err := a.save(); err != nil {
+			a.entries[i] = old // não gravou: mantém os dados antigos
+			return errors.New("não consegui salvar no disco: " + err.Error())
+		}
+		return nil
+	}
+	return errors.New("senha não encontrada")
+}
+
 func (a *App) DeleteEntry(id int) {
 	if !a.unlocked {
 		return

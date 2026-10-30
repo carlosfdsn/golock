@@ -1396,3 +1396,59 @@ button:active {
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ============ Menu de ações do card (⋯) ============ */
+.icon-btn.mais[aria-expanded="true"] {
+  background: var(--vidro-2);
+  color: var(--ouro);
+}
+.menu-card {
+  position: fixed;
+  z-index: 60;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--solido);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  box-shadow: var(--sombra);
+  animation: abrir-menu 0.14s ease-out;
+}
+.menu-card button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  text-align: left;
+  background: transparent;
+  border-radius: 10px;
+}
+.menu-card button:hover {
+  background: var(--vidro-2);
+}
+.menu-card button svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: var(--mut);
+}
+.menu-card button.perigo,
+.menu-card button.perigo svg {
+  color: var(--erro);
+}
+.menu-card hr {
+  border: 0;
+  border-top: 1px solid var(--borda);
+  margin: 4px 6px;
+}
+@keyframes abrir-menu {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

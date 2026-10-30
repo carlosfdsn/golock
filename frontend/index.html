@@ -104,25 +104,20 @@
           </div>
         </div>
         <div class="acoes">
-          <button class="icon-btn btn-tema" aria-label="Alternar tema"></button>
           <button
-            id="btn-recup"
-            class="icon-btn"
-            aria-label="Chave de recuperação"
-            title="Chave de recuperação"
-            data-i="key"
-          ></button>
-          <button
-            id="btn-backup"
-            class="icon-btn"
-            aria-label="Exportar e importar"
-            title="Exportar e importar"
-            data-i="archive"
+            id="btn-mais"
+            class="icon-btn mais"
+            aria-label="Mais opções"
+            title="Mais opções"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            data-i="dots"
           ></button>
           <button
             id="btn-travar"
             class="icon-btn"
             aria-label="Travar cofre"
+            title="Travar cofre"
             data-i="lock"
           ></button>
         </div>
@@ -163,7 +158,7 @@
     <div id="modal" class="modal escondida">
       <div class="folha">
         <div class="folha-topo">
-          <h2>Nova senha</h2>
+          <h2 id="modal-titulo">Nova senha</h2>
           <button
             id="btn-fechar"
             class="icon-btn"
@@ -225,7 +220,7 @@
         <p id="dica" class="dica"></p>
 
         <button id="btn-salvar" class="principal">
-          <span>Salvar no cofre</span>
+          <span id="btn-salvar-txt">Salvar no cofre</span>
           <span class="seta" data-i="check"></span>
         </button>
         <p id="f-erro" class="erro"></p>
@@ -241,6 +236,36 @@
         <div class="fila">
           <button id="conf-nao" class="secundario">Cancelar</button>
           <button id="conf-sim" class="perigo-btn">Apagar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ BLOQUEIO AUTOMÁTICO ============ -->
+    <div id="auto" class="modal escondida">
+      <div class="folha">
+        <div class="folha-topo">
+          <h2>Bloqueio automático</h2>
+          <button
+            id="a-fechar"
+            class="icon-btn"
+            aria-label="Fechar"
+            data-i="x"
+          ></button>
+        </div>
+        <p class="sub peq">Trava o cofre depois de ficar sem uso por:</p>
+        <div id="a-tempos" class="tiles">
+          <button type="button" class="tile" data-m="1">
+            <span data-i="clock"></span><span>1 min</span>
+          </button>
+          <button type="button" class="tile" data-m="5">
+            <span data-i="clock"></span><span>5 min</span>
+          </button>
+          <button type="button" class="tile" data-m="15">
+            <span data-i="clock"></span><span>15 min</span>
+          </button>
+          <button type="button" class="tile" data-m="30">
+            <span data-i="clock"></span><span>30 min</span>
+          </button>
         </div>
       </div>
     </div>

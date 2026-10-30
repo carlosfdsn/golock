@@ -65,3 +65,7 @@ export function RecoverVault(arg1, arg2) {
 export function Unlock(arg1) {
   return window['go']['main']['App']['Unlock'](arg1);
 }
+
+export function UpdateEntry(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['UpdateEntry'](arg1, arg2, arg3, arg4, arg5);
+}
