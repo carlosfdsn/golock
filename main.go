@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -38,12 +39,12 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		OnStartup: app.startup,
+		OnStartup:  app.startup,
+		OnShutdown: app.shutdown, // apaga a chave da memória ao fechar
 		Bind: []interface{}{
 			app,
 		},
 
-		
 		Windows: &windows.Options{
 			IsZoomControlEnabled: false,
 			DisablePinchZoom:     true,
@@ -52,5 +53,6 @@ func main() {
 
 	if err != nil {
 		println("Error:", err.Error())
+		os.Exit(1)
 	}
 }

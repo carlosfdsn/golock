@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"crypto/subtle"
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -114,30 +114,12 @@ func toUTF8(raw []byte) string {
 
 // Devolve o caminho salvo, ou "" se o usuário cancelou.
 func (a *App) ExportEntries(format, master string) (string, error) {
-	if !a.unlocked {
-		return "", errors.New("cofre travado")
-	}
-	if subtle.ConstantTimeCompare([]byte(master), []byte(a.masterPass)) != 1 {
-		return "", errors.New("senha mestra incorreta")
-	}
 	format = strings.ToLower(strings.TrimSpace(format))
 	if format != "pdf" && format != "csv" && format != "txt" {
 		return "", errors.New("formato inválido")
 	}
-	if len(a.entries) == 0 {
-		return "", errors.New("não há senhas para exportar")
-	}
 
-	var data []byte
-	var err error
-	switch format {
-	case "csv":
-		data, err = a.buildCSV()
-	case "txt":
-		data = a.buildTXT()
-	case "pdf":
-		data, err = a.buildPDF()
-	}
+	data, err := a.exportData(format, master)
 	if err != nil {
 		return "", err
 	}
@@ -162,6 +144,33 @@ func (a *App) ExportEntries(format, master string) (string, error) {
 		return "", fmt.Errorf("não foi possível salvar: %w", err)
 	}
 	return path, nil
+}
+
+// Confere a senha mestra e monta o conteúdo do arquivo. O mutex fica preso só
+// aqui: a janela de "salvar" pode demorar para ser respondida e não deve
+// travar o resto do app (nem o bloqueio automático).
+func (a *App) exportData(format, master string) ([]byte, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !a.unlocked {
+		return nil, errors.New("cofre travado")
+	}
+	if err := a.checkMaster(master); err != nil {
+		return nil, err
+	}
+	if len(a.entries) == 0 {
+		return nil, errors.New("não há senhas para exportar")
+	}
+
+	switch format {
+	case "csv":
+		return a.buildCSV()
+	case "txt":
+		return a.buildTXT(), nil
+	default:
+		return a.buildPDF()
+	}
 }
 
 func (a *App) buildCSV() ([]byte, error) {
@@ -431,12 +440,30 @@ func (a *App) buildPDF() ([]byte, error) {
 
 // ====================== IMPORTAR ======================
 
+// Lê o arquivo sem passar de max bytes (não confia no tamanho que o sistema informa).
+func readLimited(path string, max int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	raw, err := io.ReadAll(io.LimitReader(f, max+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(raw)) > max {
+		return nil, errors.New("arquivo grande demais (máximo 20 MB)")
+	}
+	return raw, nil
+}
+
 func (a *App) ImportEntries() (ImportResult, error) {
 	var res ImportResult
-	if !a.unlocked {
+	if !a.isUnlocked() {
 		return res, errors.New("cofre travado")
 	}
 
+	// A janela de escolher arquivo abre SEM o mutex preso (pode demorar).
 	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title: "Escolha o arquivo para importar",
 		Filters: []runtime.FileFilter{
@@ -450,14 +477,7 @@ func (a *App) ImportEntries() (ImportResult, error) {
 		return res, nil // cancelou
 	}
 
-	info, err := os.Stat(path)
-	if err != nil {
-		return res, err
-	}
-	if info.Size() > maxImportSize {
-		return res, errors.New("arquivo grande demais (máximo 20 MB)")
-	}
-	raw, err := os.ReadFile(path)
+	raw, err := readLimited(path, maxImportSize)
 	if err != nil {
 		return res, err
 	}
@@ -483,15 +503,22 @@ func (a *App) ImportEntries() (ImportResult, error) {
 		return ImportResult{}, errors.New("não encontrei nenhuma senha nesse arquivo")
 	}
 
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if !a.unlocked { // pode ter travado enquanto a janela estava aberta
+		return ImportResult{}, errors.New("cofre travado")
+	}
+
 	// Nada é apagado nem sobrescrito: só entra o que ainda não existe
 	seen := map[string]bool{}
 	for _, e := range a.entries {
 		seen[entryKey(e)] = true
 	}
+	prevLen, prevNext := len(a.entries), a.nextID
 	for _, e := range list {
 		e.Name = strings.TrimSpace(e.Name)
 		e.Username = strings.TrimSpace(e.Username)
-		if e.Name == "" || e.Password == "" {
+		if e.Name == "" || e.Password == "" || !entryFits(e) {
 			res.Invalid++
 			continue
 		}
@@ -509,7 +536,10 @@ func (a *App) ImportEntries() (ImportResult, error) {
 	}
 	if res.Added > 0 {
 		if err := a.save(); err != nil {
-			return res, errors.New("importou, mas não consegui salvar no disco: " + err.Error())
+			// não gravou: desfaz, para a tela não mostrar o que não foi salvo
+			a.entries = a.entries[:prevLen]
+			a.nextID = prevNext
+			return ImportResult{}, errors.New("não consegui salvar no disco, nada foi importado: " + err.Error())
 		}
 	}
 	return res, nil
