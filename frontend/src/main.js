@@ -1,4 +1,8 @@
 import "./style.css";
+// Importado (e não escrito como texto): só assim o Vite inclui o arquivo no build
+// e troca o caminho pelo nome final. Com "./src/assets/..." em texto, a imagem
+// existe no `wails dev`, mas some no app compilado.
+import mascoteUrl from "./assets/mascote.png";
 import {
   HasVault,
   CreateVault,
@@ -20,7 +24,7 @@ import {
 } from "../wailsjs/go/main/App";
 
 const $ = (id) => document.getElementById(id);
-const MASC = "./src/assets/mascote.png";
+const MASC = mascoteUrl;
 
 // ---------- Ícones ----------
 const P = {
@@ -302,7 +306,7 @@ $("b-importar").onclick = async () => {
       `${r.added} ${r.added === 1 ? "senha importada" : "senhas importadas"}`,
     );
     $("b-res").textContent =
-      `${r.format}: ${r.added} importadas, ${r.skipped} já existiam, ${r.invalid} ignoradas (sem nome ou senha).`;
+      `${r.format}: ${r.added} importadas, ${r.skipped} já existiam, ${r.invalid} ignoradas (sem nome, sem senha ou grandes demais).`;
   } catch (err) {
     $("b-erro").textContent = String(err);
   }
@@ -328,7 +332,6 @@ async function iniciar() {
   $("forca-login").classList.toggle("escondida", !modoCriar);
   $("btn-esqueci").classList.toggle("escondida", modoCriar);
   mostrar("tela-login");
-  mostrar("tela-login");
 }
 
 function falhar(msg, input) {
@@ -339,7 +342,13 @@ function falhar(msg, input) {
   input.classList.add("tremer");
 }
 
+let entrando = false;
 async function entrar() {
+  // Enter + clique (ou clique duplo) disparavam duas chamadas: no "Criar cofre"
+  // a segunda falhava com "já existe um cofre" por cima da primeira.
+  if (entrando) return;
+  entrando = true;
+  $("btn-entrar").disabled = true;
   $("erro").textContent = "";
   const senha = $("senha").value;
   try {
@@ -360,6 +369,9 @@ async function entrar() {
     await abrirCofre();
   } catch (err) {
     falhar(String(err), $("senha"));
+  } finally {
+    entrando = false;
+    $("btn-entrar").disabled = false;
   }
 }
 
@@ -816,10 +828,16 @@ function criarCard(e, i, animar) {
     card.classList.remove("entra");
     card.classList.add("saindo");
     await new Promise((r) => setTimeout(r, 350));
-    await DeleteEntry(e.id);
-    revelados.delete(e.id);
-    await carregar();
-    toast("Senha apagada", "trash");
+    try {
+      await DeleteEntry(e.id);
+      revelados.delete(e.id);
+      await carregar();
+      toast("Senha apagada", "trash");
+    } catch (err) {
+      // não gravou no disco: a senha continua no cofre e a tela volta a mostrá-la
+      await carregar();
+      toast(String(err), "alert");
+    }
   };
 
   card.querySelector(".copiar").onclick = async (ev) => {
