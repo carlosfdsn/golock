@@ -11,6 +11,10 @@ FROM golang:1.25-bookworm AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# A imagem oficial usa GOTOOLCHAIN=local e recusaria o go.mod (que pede Go mais novo
+# que o da imagem). Com "auto" o Go baixa a versão exata que o go.mod exige.
+ENV GOTOOLCHAIN=auto
+
 # Dependências do Wails no Linux (GTK + WebKit) e Node.js para o frontend
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \

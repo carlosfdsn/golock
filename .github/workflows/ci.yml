@@ -30,7 +30,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26.10'
+          # mesma versão do go.mod (antes estava fixa em 1.26.10 e o go.mod pedia 1.27.0)
+          go-version-file: go.mod
           cache: true
 
       - name: Setup Node.js
@@ -48,11 +49,20 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: Run Go tests
-        run: go test ./...
+      - name: Check Go formatting
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [ -n "$unformatted" ]; then
+            echo "Arquivos fora do padrão (rode 'gofmt -w .'):"
+            echo "$unformatted"
+            exit 1
+          fi
 
       - name: Run Go vet
         run: go vet ./...
+
+      - name: Run Go tests
+        run: go test -race ./...
 
       - name: Build GoLock
         run: go build -o /tmp/golock .
