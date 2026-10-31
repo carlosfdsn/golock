@@ -54,21 +54,25 @@ Everything stays on your computer. The vault is a single encrypted file; the mas
 ### 🔐 Vault and access
 - **Encrypted, persistent vault** stored as a single file on your computer (see [where your data lives](#where-your-data-lives)).
 - **Master password** creation (minimum 8 characters, with confirmation) and unlock.
-- **Lock** button that immediately re-locks the vault and clears the list from the UI.
+- **Lock** button that immediately re-locks the vault, clears the list from the UI and wipes the key and entries from memory.
 - Vault operations (add, list, delete, export, import) are refused by the backend while the vault is locked.
 - Safe writes: atomic saves (temp file + rename) and a `.bak` copy of the previous version.
+- **Recovery key:** a 160-bit key shown once when the vault is created (and regenerated from the ⋯ menu). It opens the vault if you forget the master password; without it and the master password, nothing can be recovered.
+- **Auto-lock** after 1, 5, 15 or 30 minutes of inactivity (default 5; configurable from the ⋯ menu).
 
 ### 🗂️ Password management
 - **Add entries** with name, username/e-mail, password and category.
+- **Edit entries** from the ⋯ menu on each card.
 - **Automatic category detection** from the entry name (e.g. "Nubank" → *Banks & finance*), with manual override.
 - **8 categories:** E-mails, Banks & finance, Social networks, Streaming, Games, Work, Shopping, Others.
 - **Search** by name or username, plus **category chips** with counts.
 - **Show / hide** each password individually.
-- **Copy to clipboard** with **automatic clearing after 15 seconds**.
+- **Copy to clipboard** with **automatic clearing after 15 seconds** (only if the clipboard still holds the copied password).
 - **Delete** with a confirmation dialog.
+- **Field limits:** name and username up to 200 characters, password up to 1024.
 
 ### 🛠️ Password tools
-- **Password generator:** 20 cryptographically random characters (`crypto/rand`), avoiding look-alike characters (`l`, `I`, `O`, `0`, `1`).
+- **Password generator:** 20 cryptographically random characters (`crypto/rand`), avoiding look-alike characters (`l`, `I`, `O`, `0`, `1`) and always including at least one lowercase letter, one uppercase letter, one digit and one symbol.
 - **Strength meter** (weak, fair, good, strong) when creating the master password and on the add form.
 - **Dashboard summary:** total passwords, categories in use, and a counter of weak passwords ("to improve") with a warning icon on affected cards.
 
@@ -100,7 +104,7 @@ Everything stays on your computer. The vault is a single encrypted file; the mas
 
 ### Prerequisites
 
-- [Go](https://go.dev/dl/) **1.25** or newer
+- [Go](https://go.dev/dl/) **1.25** or newer (check the `go` line in `go.mod` for the exact version)
 - [Node.js](https://nodejs.org/) and npm
 - [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
   `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
@@ -134,15 +138,29 @@ docker build --target export --output ./dist .
 
 Output: `./dist/golock.exe` (Windows) and `./dist/golock` (Linux).
 
+### Run the tests
+
+The Go package embeds `frontend/dist`, so on a fresh clone build the frontend once before running the Go tooling:
+
+```bash
+cd frontend && npm ci && npm run build && cd ..
+gofmt -l .          # must print nothing
+go vet ./...
+go test -race ./...
+```
+
+The tests use a temporary folder as the user config directory, so they never touch your real vault. CI runs the same checks (formatting, `go vet` and race-enabled tests) on every push and pull request.
+
 ## Usage guide
 
-1. **Create your vault.** On first launch, choose a master password (8+ characters) and repeat it.
+1. **Create your vault.** On first launch, choose a master password (8+ characters) and repeat it. Write down the **recovery key** shown right after: it is displayed only once.
 2. **Add a password.** Press **+**, type a name (the category is detected as you type), fill in user and password, optionally use the ✨ generator, and save.
 3. **Find passwords.** Use the search box or the category chips.
 4. **Reveal or copy.** Use the eye icon to show a password or the copy icon; the clipboard is wiped after 15 seconds.
 5. **Back up.** Open the archive icon in the header, pick a format, confirm your master password and choose where to save.
 6. **Restore or migrate.** In the same dialog, choose a `.csv`, `.txt` or `.pdf` file to import.
 7. **Lock.** Use the lock icon in the header when you step away.
+8. **Forgot the master password?** Use the forgot-password option on the login screen with your recovery key to set a new master password; your data is kept.
 
 ### Where your data lives
 
@@ -158,7 +176,7 @@ A `vault.golock.bak` copy of the previous version is kept next to it. **Back up 
 
 ### Automatic categories
 
-The first category whose keyword appears (case-insensitive substring) in the name wins. No match results in **Others**.
+The first category whose keyword appears (case-insensitive substring) in the name wins. No match results in **Others**. Keywords of up to 3 letters (such as `xp`, `c6`, `pix`, `max`) only match as whole words, so a name like "Expedia" is not mistaken for a bank.
 
 | Category (key) | Example keywords |
 |---|---|
@@ -171,7 +189,7 @@ The first category whose keyword appears (case-insensitive substring) in the nam
 | Shopping (`compras`) | amazon, mercado livre, shopee, aliexpress, magalu, shein, ifood |
 | Others (`outros`) | fallback |
 
-Because matching is by substring, short keywords can occasionally match unrelated names. You can always choose the category manually.
+Longer keywords are matched as substrings, so unrelated names can occasionally match. You can always choose the category manually.
 
 ### Password strength
 
@@ -232,8 +250,8 @@ A4 document generated without any PDF library, grouped by category, with a warni
 | Required columns | A name column and a password column |
 | Category resolution | Matches a category key or label; otherwise auto-detected from the name |
 | De-duplication | Skipped if the same name + username (case-insensitive) and password already exist |
-| Invalid rows | Rows without name or password are ignored |
-| Safety | Nothing is deleted or overwritten; imported entries are only appended |
+| Invalid rows | Rows without name or password, or with fields over the size limits (name/username 200, password 1024 characters), are ignored |
+| Safety | Nothing is deleted or overwritten; imported entries are only appended. If saving to disk fails, the whole import is rolled back |
 | Result | `X added, Y already existed, Z ignored` |
 
 ## Architecture
@@ -259,7 +277,7 @@ flowchart LR
 ```
 
 - **`main.go`**: configures the Wails window and embeds `frontend/dist`.
-- **`app.go`**: the `App` struct (unlocked state, entries, derived key) with vault, category and password methods.
+- **`app.go`**: the `App` struct (unlocked state, entries, data key; guarded by a mutex because Wails calls methods concurrently) with vault, category and password methods.
 - **`vault.go`**: key derivation, encryption/decryption, file format and atomic persistence.
 - **`backup.go`**: export builders, the custom PDF writer and all import parsers.
 - **Frontend**: a single-page app with one module (`main.js`) and one stylesheet; state lives in module variables.
@@ -271,18 +289,22 @@ All methods are exposed to the frontend through Wails (`frontend/wailsjs/go/main
 | Method | Returns | Description |
 |---|---|---|
 | `HasVault()` | `bool` | Whether a vault file already exists on this computer. |
-| `CreateVault(master)` | `error` | Creates a new encrypted vault (master ≥ 8 chars) and unlocks it. Never overwrites an existing vault. |
+| `CreateVault(master)` | `string, error` | Creates a new encrypted vault (master ≥ 8 chars) and unlocks it; returns the recovery key (shown once). Never overwrites an existing vault. |
 | `Unlock(master)` | `error` | Derives the key, decrypts the vault and unlocks. |
-| `Lock()` | – | Locks the vault. |
+| `Lock()` | – | Locks the vault and wipes the key and entries from memory. |
 | `Categories()` | `[]Category` | List of `{key, label}`. |
 | `DetectCategory(name)` | `string` | Category key inferred from a name. |
 | `AddEntry(name, user, pass, category)` | `error` | Adds and saves an entry; empty/invalid category triggers auto-detection. |
+| `UpdateEntry(id, name, user, pass, category)` | `error` | Edits an entry and saves; reverts the change if saving fails. |
 | `ListEntries()` | `[]Entry` | Entries (empty list when locked). |
-| `DeleteEntry(id)` | – | Removes an entry by ID and saves. |
+| `DeleteEntry(id)` | `error` | Removes an entry by ID and saves; keeps the entry and returns an error if saving fails. |
 | `GeneratePassword(n)` | `string` | Random password; length clamped to 8–64. |
-| `CopyToClipboard(text)` | – | Copies text and clears the clipboard after 15 s. |
+| `CopyToClipboard(text)` | – | Copies text and clears the clipboard after 15 s (only if it still holds that text). |
 | `ExportEntries(format, master)` | `string, error` | Exports `pdf`/`csv`/`txt`; returns the saved path, or `""` if cancelled. |
 | `ImportEntries()` | `ImportResult, error` | Opens a file dialog and imports; returns `{format, added, skipped, invalid}`. |
+| `HasRecoveryKey()` | `bool` | Whether the vault has a recovery key (works while locked). |
+| `GenerateRecoveryKey(master)` | `string, error` | Creates a new recovery key (the previous one stops working); requires the master password. |
+| `RecoverVault(recoveryKey, newMaster)` | `string, error` | Opens the vault with the recovery key, sets a new master password and returns a new recovery key. Data is preserved. |
 
 ```go
 type Entry struct { ID int; Name, Username, Password, Category string }
@@ -300,6 +322,8 @@ golock/
 ├── backup.go             # Export (CSV/TXT/PDF) and import parsers
 ├── wails.json            # Wails project configuration
 ├── Dockerfile            # Reproducible Windows + Linux build
+├── *_test.go             # Tests: vault security, app flows, import/export
+├── .github/workflows/    # CI (checks) and release builds
 ├── go.mod / go.sum
 └── frontend/
     ├── index.html        # All screens and dialogs
@@ -317,8 +341,10 @@ golock/
 |---|---|
 | Key derivation | **Argon2id**, 3 iterations, 64 MiB memory, 4 threads, random 16-byte salt per vault |
 | Encryption | **AES-256-GCM** (confidentiality and tamper detection), fresh random nonce on every save |
+| Key hierarchy | A random 256-bit data key encrypts the vault; it is stored wrapped by the master-password key and, optionally, by a key derived from the recovery key (160 random bits) |
 | Authenticated header | KDF parameters, salt and version are bound to the ciphertext as AAD, so changing them makes decryption fail |
 | Master password | Never written to disk |
+| Memory | The data key and entries are wiped on lock and on exit; the master password is not retained. Go strings cannot be zeroed, so this is best effort |
 | Malicious files | KDF parameters read from a file are capped, so a crafted vault cannot request absurd resources |
 | File permissions | Vault `0600` / folder `0700`; exports `0600` |
 | Writes | Atomic (temp file, `fsync`, rename) with a `.bak` of the previous version |
@@ -329,29 +355,30 @@ golock/
 ## Known limitations
 
 - **Not independently audited.** Treat it as a learning/portfolio project until it has been reviewed.
-- **Lock does not wipe memory yet.** After locking, the derived key and entries remain in process memory until the app closes. (Planned fix: zero them on lock.)
+- **Memory wiping is best effort.** Locking wipes the data key and the entry list, but Go strings are immutable, so copies of passwords may linger until garbage-collected, and the OS may swap memory to disk.
 - **Weak master password = weak vault.** Argon2id slows guessing down but cannot save a short or common password. Use a long passphrase.
 - **No brute-force throttling** on unlock beyond the Argon2id cost.
 - **Exports are plain text** (see the in-app warning).
-- **Clipboard clearing** is unconditional after 15 s, even if you copied something else in the meantime.
-- **No auto-lock** on inactivity, and **no editing** of existing entries yet (delete and re-add).
-- **No master-password change** or vault-file recovery if the password is forgotten. There is no backdoor.
+- **CSV exports are not escaped against spreadsheet formulas** (needed for lossless re-import): values starting with `=`, `+`, `-` or `@` are written as-is and could be interpreted as formulas when opened in a spreadsheet.
+- **Clipboard clearing** happens 15 s after copying and only if the clipboard still holds the copied text; clipboard-history tools (such as Windows `Win+V`) may keep their own copy.
+- **The `.bak` copy keeps the previous version**, which still opens with the previous master password and recovery key. If you reset the password because it may have leaked, delete `vault.golock.bak` afterwards.
+- **No backdoor:** if you lose both the master password and the recovery key, the data cannot be recovered. For now, the master password can only be changed through the recovery key.
 - **UI is pt-BR only.**
 
 ## Roadmap
 
-- [ ] Zero key and entries in memory on lock
-- [ ] Edit existing entries
+- [x] Zero key and entries in memory on lock
+- [x] Edit existing entries
 - [ ] Change master password
-- [ ] Auto-lock on inactivity
+- [x] Auto-lock on inactivity
 - [ ] Language switcher (pt-BR / English)
 - [ ] Encrypted export format
-- [ ] Automated tests for category detection, vault encryption and import/export parsers
-- [ ] CI with `go vet` and `govulncheck`
+- [x] Automated tests for category detection, vault encryption and import/export parsers
+- [ ] CI with `go vet` and `govulncheck` (`go vet`, `gofmt` and race-enabled tests already run in CI; `govulncheck` is still missing)
 
 ## Contributing
 
-Issues and pull requests are welcome. For security problems, please **do not** open a public issue with exploit details; contact the author directly first.
+Issues and pull requests are welcome. For security problems, please **do not** open a public issue with exploit details; contact the author directly first. Before opening a pull request, run `gofmt -l .`, `go vet ./...` and `go test -race ./...` (see [Run the tests](#run-the-tests)).
 
 ## License
 
