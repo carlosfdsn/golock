@@ -67,7 +67,46 @@ type App struct {
 
 func NewApp() *App { return &App{nextID: 1} }
 
-func (a *App) startup(ctx context.Context) { a.ctx = ctx }
+// startup calcula um tamanho inicial proporcional ao monitor ativo.
+ // ScreenGetAll é usado em vez de assumir uma resolução fixa; a margem evita
+ // que a janela cubra a área reservada normalmente ao painel/barra de tarefas.
+func (a *App) startup(ctx context.Context) {
+	a.ctx = ctx
+
+	screens := runtime.ScreenGetAll(ctx)
+	if len(screens) == 0 {
+		return
+	}
+
+	screen := screens[0]
+	for _, candidate := range screens {
+		if candidate.IsPrimary {
+			screen = candidate
+		}
+		if candidate.IsCurrent {
+			screen = candidate
+			break
+		}
+	}
+
+	if screen.Width <= 0 || screen.Height <= 0 {
+		return
+	}
+
+	minWidth := min(380, screen.Width-48)
+	minHeight := min(440, screen.Height-72)
+	minWidth = max(280, minWidth)
+	minHeight = max(320, minHeight)
+
+	width := min(920, screen.Width*90/100)
+	height := min(760, screen.Height*88/100)
+	width = max(minWidth, width)
+	height = max(minHeight, height)
+
+	runtime.WindowSetMinSize(ctx, minWidth, minHeight)
+	runtime.WindowSetSize(ctx, width, height)
+	runtime.WindowCenter(ctx)
+}
 
 // Ao fechar o app, apaga a chave da memória.
 func (a *App) shutdown(ctx context.Context) {
