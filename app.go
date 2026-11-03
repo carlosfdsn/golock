@@ -69,7 +69,7 @@ func NewApp() *App { return &App{nextID: 1} }
 
 // startup calcula um tamanho inicial proporcional ao monitor ativo.
 // ScreenGetAll é usado em vez de assumir uma resolução fixa; a margem evita
- // que a janela cubra a área reservada normalmente ao painel/barra de tarefas.
+// que a janela cubra a área reservada normalmente ao painel/barra de tarefas.
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
