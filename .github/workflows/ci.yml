@@ -58,6 +58,9 @@ jobs:
             exit 1
           fi
 
+      - name: Run govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
       - name: Run Go vet
         run: go vet ./...
 
