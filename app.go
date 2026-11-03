@@ -73,8 +73,8 @@ func NewApp() *App { return &App{nextID: 1} }
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	screens := runtime.ScreenGetAll(ctx)
-	if len(screens) == 0 {
+	screens, err := runtime.ScreenGetAll(ctx)
+	if err != nil || len(screens) == 0 {
 		return
 	}
 
