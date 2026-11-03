@@ -1452,3 +1452,188 @@ button:active {
     transform: none;
   }
 }
+
+/* ============ Responsividade para janelas desktop ============ */
+/* Evita que o tamanho mínimo do documento force overflow horizontal no WebView. */
+html,
+body {
+  width: 100%;
+  min-width: 0;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.tela,
+.folha,
+.grupo,
+.card,
+.stat,
+.stat > div {
+  min-width: 0;
+}
+
+.tela {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-block: clamp(16px, 3vh, 24px);
+  padding-inline: clamp(16px, 3vw, 24px);
+}
+
+.login {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.cofre {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.resumo {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stat small,
+.tile,
+.folha-topo h2 {
+  overflow-wrap: anywhere;
+}
+
+/* O modal e seu conteúdo rolam dentro da janela, sem cortar ações no rodapé. */
+.modal {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.folha {
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+.campo-senha,
+.folha-topo {
+  min-width: 0;
+}
+
+@media (max-height: 700px) and (min-width: 601px) {
+  .tela {
+    padding-top: 14px;
+    padding-bottom: 18px;
+  }
+
+  .login {
+    gap: 10px;
+  }
+
+  .login .mascote-wrap:not(.mini) {
+    width: clamp(76px, 15vh, 112px);
+    height: clamp(76px, 15vh, 112px);
+  }
+
+  .login .marca {
+    font-size: clamp(28px, 4vh, 36px);
+  }
+
+  input {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .principal {
+    padding-top: 13px;
+    padding-bottom: 13px;
+  }
+
+  .cofre {
+    padding-bottom: 96px;
+  }
+
+  .modal {
+    padding-block: 12px;
+  }
+
+  .folha {
+    max-height: calc(100dvh - 24px);
+  }
+}
+
+@media (max-width: 600px) {
+  .modal {
+    max-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .folha {
+    width: 100%;
+    max-height: calc(100dvh - 8px);
+  }
+
+  .fila {
+    flex-wrap: wrap;
+  }
+
+  .fila > button {
+    min-width: 110px;
+  }
+
+  .toast {
+    max-width: calc(100vw - 24px);
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .resumo {
+    gap: 6px;
+  }
+
+  .stat {
+    padding: 10px 4px;
+  }
+
+  .stat b {
+    font-size: 18px;
+  }
+
+  .stat small {
+    font-size: 11px;
+  }
+
+  .card {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
+  .mini {
+    gap: 4px;
+  }
+
+  .mini .icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .folha {
+    padding-inline: 16px;
+  }
+}
+
+/* Em janelas muito baixas, prioriza a rolagem do diálogo sobre o corte. */
+@media (max-height: 520px) {
+  .modal {
+    align-items: start;
+    padding: 8px;
+  }
+
+  .folha {
+    max-height: calc(100dvh - 16px);
+    padding-block: 16px;
+    border-radius: 18px;
+  }
+}
