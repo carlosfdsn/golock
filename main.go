@@ -13,27 +13,21 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// Tamanho fixo da janela (o mesmo em qualquer tela).
-const (
-	windowWidth  = 460
-	windowHeight = 780
-)
-
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 
-	// Create application with options
+	// Create application with options. The startup hook adjusts the initial
+	// dimensions to the active display while keeping these safe fallback values.
 	err := wails.Run(&options.App{
 		Title:  "GoLock",
-		Width:  windowWidth,
-		Height: windowHeight,
+		Width:  820,
+		Height: 520,
 
-		DisableResize: true,
-		MinWidth:      windowWidth,
-		MinHeight:     windowHeight,
-		MaxWidth:      windowWidth,
-		MaxHeight:     windowHeight,
+		// The window remains resizable. The startup hook applies screen-aware
+		// minimum dimensions so the window can still fit smaller displays.
+		MinWidth:  320,
+		MinHeight: 360,
 
 		BackgroundColour: &options.RGBA{R: 14, G: 10, B: 26, A: 1},
 		AssetServer: &assetserver.Options{
