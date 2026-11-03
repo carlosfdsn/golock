@@ -1,4 +1,4 @@
-<div align="center">
+ <div align="center">
 
 <img src="frontend/src/assets/mascote.png" alt="GoLock mascot" width="150" />
 
@@ -8,7 +8,7 @@
 
 Encrypted with **Argon2id + AES-256-GCM** · Built with **Go** and **Wails** · No cloud, no accounts, no network calls.
 
-![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)
+![Go](https://img.shields.io/badge/Go-1.27.0+-00ADD8?logo=go&logoColor=white)
 ![Wails](https://img.shields.io/badge/Wails-v2-DF0000)
 ![Platforms](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-8B5CF6)
 ![Local-first](https://img.shields.io/badge/local--first-no%20network-2EA043)
@@ -55,9 +55,9 @@ Everything stays on your computer. The vault is a single encrypted file; the mas
 - **Encrypted, persistent vault** stored as a single file on your computer (see [where your data lives](#where-your-data-lives)).
 - **Master password** creation (minimum 8 characters, with confirmation) and unlock.
 - **Lock** button that immediately re-locks the vault, clears the list from the UI and wipes the key and entries from memory.
-- Vault operations (add, list, delete, export, import) are refused by the backend while the vault is locked.
+- Vault operations (add, list, edit, delete, export, import) are refused by the backend while the vault is locked.
 - Safe writes: atomic saves (temp file + rename) and a `.bak` copy of the previous version.
-- **Recovery key:** a 160-bit key shown once when the vault is created (and regenerated from the ⋯ menu). It opens the vault if you forget the master password; without it and the master password, nothing can be recovered.
+- **Recovery key:** a 160-bit key shown when the vault is created. It can also be regenerated from the ⋯ menu; generating a new one invalidates the previous key. It allows you to recover access if you forget your master password.
 - **Auto-lock** after 1, 5, 15 or 30 minutes of inactivity (default 5; configurable from the ⋯ menu).
 
 ### 🗂️ Password management
@@ -85,13 +85,15 @@ Everything stays on your computer. The vault is a single encrypted file; the mas
 ### 🎨 Interface
 - Dark and light themes (follows the OS preference and remembers your choice).
 - Animated background, a mascot that reacts to what you do, spark effects and toast notifications.
-- Responsive layout and support for `prefers-reduced-motion`.
+- Resizable window with an initial size adapted to the available screen resolution, plus a responsive layout for smaller windows.
+- Support for `prefers-reduced-motion`, respecting the system preference for reduced motion.
 - Keyboard: `Enter` submits login and export forms; `Esc` closes the topmost dialog.
 - User-supplied text is rendered with `textContent` (no HTML injection).
 
 > The interface language is currently **Portuguese (pt-BR) only**; there is no in-app language switcher yet.
 
 ## How it works
+
 | Screen | Purpose |
 |---|---|
 | **Login** | Create the master password (first run) or unlock. Shows a strength meter when creating. |
@@ -104,10 +106,10 @@ Everything stays on your computer. The vault is a single encrypted file; the mas
 
 ### Prerequisites
 
-- [Go](https://go.dev/dl/) **1.25** or newer (check the `go` line in `go.mod` for the exact version)
-- [Node.js](https://nodejs.org/) and npm
+- [Go](https://go.dev/dl/) **1.27.0** or newer (the version declared in `go.mod`)
+- [Node.js](https://nodejs.org/) 22 and npm
 - [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
-  `go install github.com/wailsapp/wails/v2/cmd/wails@latest`
+  `go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0`
 - Platform dependencies for Wails (WebView2 on Windows, WebKitGTK and GTK3 on Linux). Run `wails doctor` to check your environment.
 
 ### Run in development
@@ -136,7 +138,12 @@ The Dockerfile works as a clean "factory": it compiles the app in an isolated en
 docker build --target export --output ./dist .
 ```
 
-Output: `./dist/golock.exe` (Windows) and `./dist/golock` (Linux).
+Output:
+
+- `./dist/golock.exe` (Windows)
+- `./dist/golock` (Linux)
+
+The Docker build uses Go's automatic toolchain management to obtain the version required by `go.mod`.
 
 ### Run the tests
 
@@ -147,20 +154,21 @@ cd frontend && npm ci && npm run build && cd ..
 gofmt -l .          # must print nothing
 go vet ./...
 go test -race ./...
+go build ./...
 ```
 
-The tests use a temporary folder as the user config directory, so they never touch your real vault. CI runs the same checks (formatting, `go vet` and race-enabled tests) on every push and pull request.
+The tests use a temporary folder as the user config directory, so they never touch your real vault. CI runs formatting checks, `go vet`, race-enabled tests and builds on every push and pull request.
 
 ## Usage guide
 
-1. **Create your vault.** On first launch, choose a master password (8+ characters) and repeat it. Write down the **recovery key** shown right after: it is displayed only once.
+1. **Create your vault.** On first launch, choose a master password (8+ characters) and repeat it. Store the **recovery key** shown right after in a safe place.
 2. **Add a password.** Press **+**, type a name (the category is detected as you type), fill in user and password, optionally use the ✨ generator, and save.
 3. **Find passwords.** Use the search box or the category chips.
-4. **Reveal or copy.** Use the eye icon to show a password or the copy icon; the clipboard is wiped after 15 seconds.
+4. **Reveal or copy.** Use the eye icon to show a password or the copy icon; the clipboard is wiped after 15 seconds, provided it still contains the copied text.
 5. **Back up.** Open the archive icon in the header, pick a format, confirm your master password and choose where to save.
 6. **Restore or migrate.** In the same dialog, choose a `.csv`, `.txt` or `.pdf` file to import.
 7. **Lock.** Use the lock icon in the header when you step away.
-8. **Forgot the master password?** Use the forgot-password option on the login screen with your recovery key to set a new master password; your data is kept.
+8. **Forgot the master password?** Use the forgot-password option on the login screen with your recovery key to set a new master password; your data is kept and a new recovery key is generated.
 
 ### Where your data lives
 
@@ -176,17 +184,17 @@ A `vault.golock.bak` copy of the previous version is kept next to it. **Back up 
 
 ### Automatic categories
 
-The first category whose keyword appears (case-insensitive substring) in the name wins. No match results in **Others**. Keywords of up to 3 letters (such as `xp`, `c6`, `pix`, `max`) only match as whole words, so a name like "Expedia" is not mistaken for a bank.
+The first category whose keyword matches the name (case-insensitive) wins. No match results in **Others**. Keywords of up to 3 letters (such as `xp`, `c6`, `pix`, `max`) only match as whole words, so a name like "Expedia" is not mistaken for a bank.
 
 | Category (key) | Example keywords |
 |---|---|
-| E-mails (`email`) | gmail, outlook, hotmail, yahoo, proton, icloud, mail |
-| Banks & finance (`banco`) | nubank, itau, bradesco, santander, caixa, c6, picpay, paypal, pix, binance, xp |
-| Social networks (`social`) | instagram, facebook, twitter, tiktok, linkedin, whatsapp, telegram, discord, reddit |
-| Streaming (`streaming`) | netflix, spotify, disney, prime, hbo, max, youtube, twitch, crunchyroll |
-| Games (`jogos`) | steam, epic, xbox, playstation, riot, valorant, nintendo, roblox, minecraft |
-| Work (`trabalho`) | slack, github, gitlab, notion, trello, teams, zoom, jira, figma |
-| Shopping (`compras`) | amazon, mercado livre, shopee, aliexpress, magalu, shein, ifood |
+| E-mails (`email`) | gmail, outlook, hotmail, yahoo, proton, icloud, e-mail, email, mail |
+| Banks & finance (`banco`) | banco, bank, nubank, itau, bradesco, santander, caixa, c6, picpay, paypal, mercado pago, pix, cartao, cartão, corretora, xp, binance |
+| Social networks (`social`) | instagram, facebook, twitter, tiktok, linkedin, whatsapp, telegram, discord, reddit, pinterest, snapchat, threads |
+| Streaming (`streaming`) | netflix, spotify, disney, prime, hbo, max, youtube, globoplay, deezer, twitch, crunchyroll |
+| Games (`jogos`) | steam, epic, xbox, playstation, psn, riot, valorant, nintendo, roblox, minecraft, battle.net |
+| Work (`trabalho`) | slack, github, gitlab, notion, trello, teams, zoom, jira, figma, google drive, empresa, trabalho |
+| Shopping (`compras`) | amazon, mercado livre, mercadolivre, shopee, aliexpress, magalu, americanas, shein, ifood, loja |
 | Others (`outros`) | fallback |
 
 Longer keywords are matched as substrings, so unrelated names can occasionally match. You can always choose the category manually.
@@ -221,7 +229,7 @@ Nubank,me@example.com,s3cret!,Bancos e finanças
 
 ### TXT
 
-```
+```text
 golock - exportação de senhas
 Gerado em: 18/10/2026 15:51
 Total: 1
@@ -276,7 +284,7 @@ flowchart LR
   A --> V --> D
 ```
 
-- **`main.go`**: configures the Wails window and embeds `frontend/dist`.
+- **`main.go`**: configures the Wails window, sets its initial and minimum dimensions, and adapts the initial size to the available screen resolution. It also embeds `frontend/dist`.
 - **`app.go`**: the `App` struct (unlocked state, entries, data key; guarded by a mutex because Wails calls methods concurrently) with vault, category and password methods.
 - **`vault.go`**: key derivation, encryption/decryption, file format and atomic persistence.
 - **`backup.go`**: export builders, the custom PDF writer and all import parsers.
@@ -289,7 +297,7 @@ All methods are exposed to the frontend through Wails (`frontend/wailsjs/go/main
 | Method | Returns | Description |
 |---|---|---|
 | `HasVault()` | `bool` | Whether a vault file already exists on this computer. |
-| `CreateVault(master)` | `string, error` | Creates a new encrypted vault (master ≥ 8 chars) and unlocks it; returns the recovery key (shown once). Never overwrites an existing vault. |
+| `CreateVault(master)` | `string, error` | Creates a new encrypted vault (master ≥ 8 chars) and unlocks it; returns the recovery key. Never overwrites an existing vault. |
 | `Unlock(master)` | `error` | Derives the key, decrypts the vault and unlocks. |
 | `Lock()` | – | Locks the vault and wipes the key and entries from memory. |
 | `Categories()` | `[]Category` | List of `{key, label}`. |
@@ -307,14 +315,24 @@ All methods are exposed to the frontend through Wails (`frontend/wailsjs/go/main
 | `RecoverVault(recoveryKey, newMaster)` | `string, error` | Opens the vault with the recovery key, sets a new master password and returns a new recovery key. Data is preserved. |
 
 ```go
-type Entry struct { ID int; Name, Username, Password, Category string }
-type Category struct { Key, Label string }
-type ImportResult struct { Format string; Added, Skipped, Invalid int }
+type Entry struct {
+    ID int
+    Name, Username, Password, Category string
+}
+
+type Category struct {
+    Key, Label string
+}
+
+type ImportResult struct {
+    Format string
+    Added, Skipped, Invalid int
+}
 ```
 
 ## Project structure
 
-```
+```text
 golock/
 ├── main.go               # Wails entry point and window options
 ├── app.go                # Entries, categories, generator, clipboard
@@ -323,7 +341,7 @@ golock/
 ├── wails.json            # Wails project configuration
 ├── Dockerfile            # Reproducible Windows + Linux build
 ├── *_test.go             # Tests: vault security, app flows, import/export
-├── .github/workflows/    # CI (checks) and release builds
+├── .github/workflows/    # CI and release builds
 ├── go.mod / go.sum
 └── frontend/
     ├── index.html        # All screens and dialogs
@@ -345,7 +363,7 @@ golock/
 | Authenticated header | KDF parameters, salt and version are bound to the ciphertext as AAD, so changing them makes decryption fail |
 | Master password | Never written to disk |
 | Memory | The data key and entries are wiped on lock and on exit; the master password is not retained. Go strings cannot be zeroed, so this is best effort |
-| Malicious files | KDF parameters read from a file are capped, so a crafted vault cannot request absurd resources |
+| Malicious files | KDF parameters read from a file are capped, so a crafted vault cannot request excessive resources |
 | File permissions | Vault `0600` / folder `0700`; exports `0600` |
 | Writes | Atomic (temp file, `fsync`, rename) with a `.bak` of the previous version |
 | Random numbers | `crypto/rand` for salts, nonces and the password generator |
@@ -354,7 +372,7 @@ golock/
 
 ## Known limitations
 
-- **Not independently audited.** Treat it as a learning/portfolio project until it has been reviewed.
+- **Not independently audited.** Treat it as a learning/portfolio project until it has been reviewed by security professionals.
 - **Memory wiping is best effort.** Locking wipes the data key and the entry list, but Go strings are immutable, so copies of passwords may linger until garbage-collected, and the OS may swap memory to disk.
 - **Weak master password = weak vault.** Argon2id slows guessing down but cannot save a short or common password. Use a long passphrase.
 - **No brute-force throttling** on unlock beyond the Argon2id cost.
@@ -362,23 +380,35 @@ golock/
 - **CSV exports are not escaped against spreadsheet formulas** (needed for lossless re-import): values starting with `=`, `+`, `-` or `@` are written as-is and could be interpreted as formulas when opened in a spreadsheet.
 - **Clipboard clearing** happens 15 s after copying and only if the clipboard still holds the copied text; clipboard-history tools (such as Windows `Win+V`) may keep their own copy.
 - **The `.bak` copy keeps the previous version**, which still opens with the previous master password and recovery key. If you reset the password because it may have leaked, delete `vault.golock.bak` afterwards.
-- **No backdoor:** if you lose both the master password and the recovery key, the data cannot be recovered. For now, the master password can only be changed through the recovery key.
+- **No backdoor:** if you lose both the master password and the recovery key, the data cannot be recovered. The master password can currently only be changed through the recovery key.
 - **UI is pt-BR only.**
 
 ## Roadmap
 
 - [x] Zero key and entries in memory on lock
 - [x] Edit existing entries
-- [ ] Change master password
+- [ ] Change master password directly from inside the vault
 - [x] Auto-lock on inactivity
 - [ ] Language switcher (pt-BR / English)
 - [ ] Encrypted export format
 - [x] Automated tests for category detection, vault encryption and import/export parsers
-- [ ] CI with `go vet` and `govulncheck` (`go vet`, `gofmt` and race-enabled tests already run in CI; `govulncheck` is still missing)
+- [x] CI with `gofmt`, `go vet` and race-enabled tests
+- [ ] Add `govulncheck` to CI
 
 ## Contributing
 
-Issues and pull requests are welcome. For security problems, please **do not** open a public issue with exploit details; contact the author directly first. Before opening a pull request, run `gofmt -l .`, `go vet ./...` and `go test -race ./...` (see [Run the tests](#run-the-tests)).
+Issues and pull requests are welcome. For security problems, please **do not** open a public issue with exploit details; contact the author directly first.
+
+Before opening a pull request, run:
+
+```bash
+gofmt -l .
+go vet ./...
+go test -race ./...
+go build ./...
+```
+
+See also [Run the tests](#run-the-tests).
 
 ## License
 
