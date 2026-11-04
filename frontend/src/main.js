@@ -22,6 +22,8 @@ import {
   RecoverVault,
 } from "../wailsjs/go/main/App";
 
+import "./desktop.js";
+
 const $ = (id) => document.getElementById(id);
 const MASC = mascoteUrl;
 
