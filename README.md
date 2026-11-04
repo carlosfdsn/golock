@@ -1,4 +1,4 @@
- <div align="center">
+<div align="center">
 
 <img src="frontend/src/assets/mascote.png" alt="GoLock mascot" width="150" />
 
@@ -8,7 +8,7 @@
 
 Encrypted with **Argon2id + AES-256-GCM** · Built with **Go** and **Wails** · No cloud, no accounts, no network calls.
 
-![Go](https://img.shields.io/badge/Go-1.27.0+-00ADD8?logo=go&logoColor=white)
+![Go](https://img.shields.io/badge/Go-1.27.2+-00ADD8?logo=go&logoColor=white)
 ![Wails](https://img.shields.io/badge/Wails-v2-DF0000)
 ![Platforms](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-8B5CF6)
 ![Local-first](https://img.shields.io/badge/local--first-no%20network-2EA043)
@@ -106,7 +106,7 @@ Everything stays on your computer. The vault is a single encrypted file; the mas
 
 ### Prerequisites
 
-- [Go](https://go.dev/dl/) **1.27.0** or newer (the version declared in `go.mod`)
+- [Go](https://go.dev/dl/) **1.27.2** or newer (the version declared in `go.mod`)
 - [Node.js](https://nodejs.org/) 22 and npm
 - [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
   `go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0`

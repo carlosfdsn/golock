@@ -1,4 +1,4 @@
- <div align="center">
+<div align="center">
 
 <img src="frontend/src/assets/mascote.png" alt="Mascote do GoLock" width="150" />
 
@@ -8,7 +8,7 @@
 
 Criptografado com **Argon2id + AES-256-GCM** · Feito com **Go** e **Wails** · Sem nuvem, sem contas, sem chamadas de rede.
 
-![Go](https://img.shields.io/badge/Go-1.27.0+-00ADD8?logo=go&logoColor=white)
+![Go](https://img.shields.io/badge/Go-1.27.2+-00ADD8?logo=go&logoColor=white)
 ![Wails](https://img.shields.io/badge/Wails-v2-DF0000)
 ![Plataformas](https://img.shields.io/badge/Windows%20%7C%20macOS%20%7C%20Linux-8B5CF6)
 ![Local](https://img.shields.io/badge/100%25-local-2EA043)
@@ -106,7 +106,7 @@ Tudo fica no seu computador. O cofre é um único arquivo criptografado, e a sen
 
 ### Pré-requisitos
 
-- [Go](https://go.dev/dl/) **1.27.0** ou superior (versão declarada no `go.mod`).
+- [Go](https://go.dev/dl/) **1.27.2** ou superior (versão declarada no `go.mod`).
 - [Node.js](https://nodejs.org/) e npm (o projeto utiliza Node.js 22 no CI).
 - [Wails CLI v2](https://wails.io/docs/gettingstarted/installation):
   `go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0`

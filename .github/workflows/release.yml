@@ -1,7 +1,5 @@
 name: Release
 
-# Cria os executáveis de Windows, Linux e macOS e publica em "Releases"
-# sempre que você enviar uma tag que comece com "v" (ex.: v0.2.0).
 on:
   push:
     tags: ["v*"]
@@ -42,8 +40,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
 
-      - name: Instalar o Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      - name: Instalar o Wails (mesma versão do go.mod)
+        shell: bash
+        run: |
+          v="$(go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2)"
+          go install "github.com/wailsapp/wails/v2/cmd/wails@${v}"
 
       - name: Compilar
         run: wails build -clean ${{ matrix.flags }}
@@ -76,6 +77,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -84,7 +87,13 @@ jobs:
       - name: Somas SHA-256
         run: cd dist && sha256sum * > SHA256SUMS.txt
 
+      - name: Notas da versão
+        run: |
+          f="docs/release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$f" ]; then cp "$f" notas.md; else echo "GoLock ${GITHUB_REF_NAME}" > notas.md; fi
+
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*
+          body_path: notas.md
           generate_release_notes: true
