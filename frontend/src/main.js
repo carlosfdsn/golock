@@ -1,7 +1,6 @@
 import "./style.css";
-// Importado (e não escrito como texto): só assim o Vite inclui o arquivo no build
-// e troca o caminho pelo nome final. Com "./src/assets/..." em texto, a imagem
-// existe no `wails dev`, mas some no app compilado.
+import "./responsive.css";
+
 import mascoteUrl from "./assets/mascote.png";
 import {
   HasVault,
