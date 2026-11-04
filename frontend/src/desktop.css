@@ -1,119 +1,128 @@
-/* GoLock · layout de desktop (janelas largas).
-   Só layout: toda cor vem das variáveis do style.css (paleta intacta). */
-.atalhos { display: none; }
+/* GoLock · desktop estilo iOS/macOS (>= 1000px). Só layout: cores vêm das variáveis do style.css. */
+.atalhos, .detalhe, #btn-novo-d, .busca-kbd { display: none; }
 
 @media (min-width: 1000px) and (min-height: 560px) {
   body { display: flex; }
+  .fab { display: none; }
+  #btn-novo-d { display: grid; }
 
-  /* Login: cartão de vidro centralizado */
+  /* Login: cartão de vidro */
   .tela.login {
-    margin: auto;
-    min-height: 0;
-    max-width: 440px;
-    padding: 36px 40px;
-    background: var(--vidro);
-    border: 1px solid var(--borda);
-    border-radius: 28px;
+    margin: auto; min-height: 0; max-width: 440px; padding: 36px 40px;
+    background: var(--vidro); border: 1px solid var(--borda); border-radius: 28px;
     box-shadow: var(--sombra);
-    backdrop-filter: blur(14px);
   }
 
-  /* Cofre: app de verdade — topo, resumo, categorias na lateral, lista com rolagem própria */
+  /* Cofre: barra superior + 3 painéis (categorias | lista | detalhe) */
   .tela.cofre {
-    max-width: 1360px;
-    height: 100dvh;
-    min-height: 0;
-    padding: 24px 32px 14px;
-    overflow: hidden;
-    display: grid;
-    column-gap: 28px;
-    grid-template-columns: 260px minmax(0, 1fr);
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "topo topo"
-      "resumo resumo"
-      "chips busca"
-      "chips lista"
-      "dica dica";
+    max-width: none; height: 100dvh; min-height: 0; padding: 0; overflow: hidden;
+    display: grid; column-gap: 0;
+    grid-template-columns: 232px 340px minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "topo topo topo" "resumo lista detalhe" "chips lista detalhe" "dica dica dica";
   }
-  .cofre .topo { grid-area: topo; margin-bottom: 20px; }
-  .cofre .resumo { grid-area: resumo; gap: 16px; margin-bottom: 24px; }
-  .cofre .stat { padding: 16px 18px; gap: 14px; }
-  .cofre .stat-ic { width: 44px; height: 44px; border-radius: 13px; }
-  .cofre .stat-ic svg { width: 21px; height: 21px; }
-  .cofre .stat b { font-size: 28px; }
-  .cofre .stat small { font-size: 13px; }
+  .cofre .topo {
+    grid-area: topo; margin: 0; padding: 10px 20px;
+    background: color-mix(in srgb, var(--solido) 60%, var(--bg)); border-bottom: 1px solid var(--borda);
+  }
 
-  .cofre .busca { grid-area: busca; margin-bottom: 18px; }
+  /* Painel lateral */
+  .cofre .resumo, .cofre .chips {
+    background: color-mix(in srgb, var(--solido) 45%, var(--bg)); border-right: 1px solid var(--borda);
+  }
+  .cofre .resumo { grid-area: resumo; grid-template-columns: 1fr; gap: 2px; margin: 0; padding: 14px 12px 6px; }
+  .cofre .stat { padding: 7px 10px; gap: 10px; background: none; border: 0; border-radius: 10px; animation: none; }
+  .cofre .stat-ic { width: 28px; height: 28px; border-radius: 8px; }
+  .cofre .stat-ic svg { width: 15px; height: 15px; }
+  .cofre .stat > div { flex: 1; display: flex; flex-direction: row-reverse; justify-content: space-between; align-items: baseline; }
+  .cofre .stat b { font-size: 15px; }
+  .cofre .stat small { font-size: 13.5px; color: var(--txt); }
+  .cofre .stat.aviso { cursor: pointer; }
+  .cofre .stat.aviso:hover, .cofre .stat.aviso.on { background: var(--vidro-2); }
   .cofre .chips {
-    grid-area: chips;
-    flex-direction: column;
-    overflow-x: hidden;
-    overflow-y: auto;
-    min-height: 0;
-    margin: 0;
-    padding: 2px 6px 8px 2px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--borda) transparent;
+    grid-area: chips; flex-direction: column; overflow: hidden auto; min-height: 0; margin: 0;
+    padding: 6px 12px 14px; gap: 2px; scrollbar-width: thin; scrollbar-color: var(--borda) transparent;
   }
-  .cofre .chip { justify-content: flex-start; padding: 11px 14px; font-size: 14px; border-radius: 13px; }
-  .cofre .chip.ativo { box-shadow: 0 6px 18px rgba(124, 58, 237, 0.28); }
+  .cofre .chip { justify-content: flex-start; padding: 8px 10px; font-size: 14px; background: none; border: 0; border-radius: 10px; }
+  .cofre .chip:hover { background: var(--vidro-2); }
+  .cofre .chip.ativo { box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3); }
 
+  /* Coluna da lista: linhas agrupadas, estilo "inset grouped" */
+  /* Busca centralizada na barra superior (pílula, estilo rede social) */
+  .cofre .topo { display: grid; grid-template-columns: 1fr minmax(300px, 560px) 1fr; align-items: center; gap: 16px; }
+  .cofre .topo .acoes { justify-self: end; }
+  .cofre .topo .busca { position: relative; margin: 0; }
+  .cofre .topo .busca > span { left: 15px; }
+  .cofre .topo .busca input { padding: 10px 70px 10px 42px; font-size: 14.5px; border-radius: 999px; background: var(--vidro-2); }
+  .busca-kbd {
+    display: block; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;
+    font: 11.5px var(--fonte); color: var(--mut); padding: 1px 7px; border: 1px solid var(--borda); border-radius: 6px;
+  }
+  .cofre .busca:focus-within .busca-kbd { opacity: 0; }
+
+  /* Títulos de seção do painel lateral */
+  .cofre .resumo::before, .cofre .chips::before {
+    display: block; padding: 4px 10px 6px; font-size: 12px; font-weight: 600; color: var(--mut);
+  }
+  .cofre .resumo::before { content: "Visão geral"; }
+  .cofre .chips::before { content: "Categorias"; padding-top: 12px; }
   .cofre #lista {
-    grid-area: lista;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 2px 8px 90px 2px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--borda) transparent;
+    grid-area: lista; min-height: 0; overflow-y: auto; padding: 14px 14px 24px;
+    border-right: 1px solid var(--borda); scrollbar-width: thin; scrollbar-color: var(--borda) transparent;
   }
-  .cofre .grupo {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 10px;
-    margin-bottom: 26px;
+  .cofre .grupo { display: block; margin-bottom: 18px; background: var(--vidro); border: 1px solid var(--borda); border-radius: 14px; overflow: hidden; }
+  .cofre .grupo-titulo { margin: 0; padding: 10px 14px 6px; }
+  .cofre .card, .cofre .card:hover {
+    margin: 0; padding: 9px 12px; background: transparent; border: 0; border-top: 1px solid var(--borda);
+    border-radius: 0; box-shadow: none; transform: none; cursor: default; user-select: none;
   }
-  .cofre .grupo-titulo { grid-column: 1 / -1; margin-bottom: 2px; }
-  .cofre .card { margin-bottom: 0; user-select: none; cursor: default; }
-  .cofre .card.foco {
-    border-color: var(--ouro);
-    box-shadow: 0 0 0 3px rgba(224, 184, 76, 0.16);
-  }
+  .cofre .card:hover { background: var(--vidro-2); }
+  .cofre .avatar { width: 36px; height: 36px; border-radius: 10px; }
+  .cofre .card .senha { display: none; }
+  .cofre .card .mini .icon-btn { opacity: 0; width: 30px; height: 30px; }
+  .cofre .card:hover .mini .icon-btn, .cofre .card.foco .mini .icon-btn { opacity: 1; }
+  .cofre .card.foco { background: linear-gradient(135deg, var(--roxo), var(--roxo-2)); color: #fff; }
+  .cofre .card.foco small, .cofre .card.foco .mini .icon-btn { color: rgba(255, 255, 255, 0.78); }
+  .cofre .card.foco .avatar { color: var(--ouro-claro); background: rgba(255, 255, 255, 0.16); }
+  .so-fracas .card:not(:has(.alerta)), .so-fracas .grupo:not(:has(.alerta)) { display: none; }
 
-  /* Botão novo, com texto */
-  .fab {
-    right: max(32px, calc(50% - 648px));
-    bottom: 56px;
-    width: auto;
-    padding: 0 24px 0 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .fab::after { content: "Nova senha"; font-weight: 600; font-size: 15px; }
+  /* Painel de detalhe */
+  .detalhe { grid-area: detalhe; display: block; background: color-mix(in srgb, var(--solido) 35%, var(--bg)); overflow-y: auto; padding: 32px 40px; min-width: 0; }
+  .det-int { max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; animation: subir 0.3s both; }
+  .det-cab { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+  .det-cab .avatar { width: 84px; height: 84px; border-radius: 22px; margin-bottom: 6px; }
+  .det-cab .avatar svg { width: 38px; height: 38px; }
+  .det-cab h2 { font-size: 24px; overflow-wrap: anywhere; }
+  .det-cab span { font-size: 13px; color: var(--ouro); }
+  .det-acoes { display: flex; justify-content: center; gap: 26px; }
+  .det-acoes button { display: flex; flex-direction: column; align-items: center; gap: 7px; background: none; font-size: 12px; color: var(--mut); }
+  .det-acoes i { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 50%; background: var(--vidro-2); color: var(--txt); transition: background 0.2s; }
+  .det-acoes button:hover i { background: var(--roxo); color: #fff; }
+  .det-acoes .perigo:hover i { background: var(--erro); }
+  .det-acoes svg { width: 20px; height: 20px; }
+  .det-grupo { background: var(--vidro); border: 1px solid var(--borda); border-radius: 14px; overflow: hidden; }
+  .det-linha { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+  .det-linha + .det-linha { border-top: 1px solid var(--borda); }
+  .det-linha > small { width: 64px; flex-shrink: 0; color: var(--mut); font-size: 13px; }
+  .det-linha > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .det-linha .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; letter-spacing: 0.04em; }
+  .det-linha .forca { flex: 1; margin: 0; }
+  .det-linha button { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; background: none; color: var(--mut); }
+  .det-linha button:hover { background: var(--vidro-2); color: var(--txt); }
+  .det-linha button svg { width: 16px; height: 16px; }
+  .det-int .aviso-box { margin: 0; }
+  #st-clip { color: var(--ouro); }
+  .det-vazio { height: 100%; display: grid; place-content: center; justify-items: center; gap: 10px; color: var(--mut); text-align: center; }
+  .det-vazio img { width: 110px; opacity: 0.9; }
+  .det-vazio strong { color: var(--txt); font-size: 17px; }
 
   /* Barra de atalhos */
   .atalhos {
-    grid-area: dica;
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--borda);
-    color: var(--mut);
-    font-size: 12.5px;
-    white-space: nowrap;
-    overflow: hidden;
+    grid-area: dica; display: flex; align-items: center; gap: 16px; padding: 8px 20px;
+    border-top: 1px solid var(--borda); color: var(--mut); font-size: 12px; white-space: nowrap; overflow: hidden;
+    background: color-mix(in srgb, var(--solido) 60%, var(--bg));
   }
-  .atalhos kbd {
-    font: inherit;
-    padding: 1px 6px;
-    margin-right: 3px;
-    background: var(--vidro);
-    border: 1px solid var(--borda);
-    border-radius: 6px;
-  }
+  .atalhos kbd { font: inherit; padding: 1px 6px; margin-right: 3px; background: var(--vidro); border: 1px solid var(--borda); border-radius: 6px; }
   .atalhos .espaco { flex: 1; }
   #st-trava { font-variant-numeric: tabular-nums; }
 
@@ -122,6 +131,12 @@
 }
 
 @media (min-width: 1500px) and (min-height: 560px) {
-  .tela.cofre { max-width: 1560px; grid-template-columns: 280px minmax(0, 1fr); }
-  .fab { right: max(32px, calc(50% - 748px)); }
+  .tela.cofre { grid-template-columns: 260px 380px minmax(0, 1fr); }
+}
+
+/* Desempenho: sem desfoque nem repintura contínua (evita tela turva e cursor sumindo no WebView2) */
+@media (min-width: 1000px) and (min-height: 560px) {
+  body { background-attachment: scroll; }
+  .cofre .card::before { display: none; }
+  .aura { animation: none; }
 }
